@@ -16,13 +16,6 @@ body {
   color: rgb(var(--primaryColor));
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: rgb(var(--backgroundDark));
-    color: rgb(var(--backgroundLight));
-  }
-}
-
 .content-container {
   padding: 1rem 4rem;
 }

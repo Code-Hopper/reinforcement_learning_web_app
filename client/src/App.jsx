@@ -1,10 +1,15 @@
 import React from 'react'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+
+import LoginRegisterPage from "./components/page/LoginRegisterPage.jsx"
 
 const App = () => {
   return (
-    <div>
-      
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<LoginRegisterPage />} />
+      </Routes>
+    </Router>
   )
 }
 
