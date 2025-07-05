@@ -4,8 +4,8 @@ import { UserLogin, UserRegister } from "../controllers/userActions.js"
 
 let userRouter = express()
 
-userRouter.get("/", UserLogin)
+userRouter.get("/login", UserLogin)
 
-userRouter.get("/register", UserRegister)
+userRouter.post("/register", UserRegister)
 
 export { userRouter }

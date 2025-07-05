@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { userRegister } from "../../../api/backendApi.js"
 import "./LoginRegister.scss";
 
 import { IoMdLogIn } from "react-icons/io";
@@ -10,6 +10,47 @@ const LoginRegister = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [showForm, setShowForm] = useState("login");
+
+  // register form
+  const [registerFormData, setRegisterFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  })
+
+  const handleRegisterFormChange = (e) => {
+    let { name, value } = e.target
+
+    setRegisterFormData(prev => {
+      return {
+        ...prev, [name]: value
+      }
+    })
+  }
+
+  const handleRegisterFormSubmit = async (e) => {
+    e.preventDefault();
+    const { fullName, email, password, confirmPassword } = registerFormData;
+
+    if (!fullName || !email || !password || !confirmPassword) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    try {
+      const result = await userRegister(registerFormData);
+      alert(result.message);
+      setShowForm("login");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   return (
     <div id='login-register-container'>
@@ -63,15 +104,23 @@ const LoginRegister = () => {
           <span className='font-bold text-2xl'>Please Register</span>
         </div>
         <div className='py-6'>
-          <form className='flex flex-col gap-10'>
+          <form onSubmit={handleRegisterFormSubmit} className='flex flex-col gap-10'>
             <div className='flex flex-col gap-4'>
               <div className='flex-1 flex flex-col gap-2'>
                 <label htmlFor="register-name">Full Name</label>
-                <input type="text" id="register-name" placeholder='Full Name' />
+                <input
+                  onChange={handleRegisterFormChange}
+                  name='fullName'
+                  value={registerFormData.fullName}
+                  type="text" id="register-name" placeholder='Full Name' />
               </div>
               <div className='flex-1 flex flex-col gap-2'>
                 <label htmlFor="register-email">Email</label>
-                <input type="email" id="register-email" placeholder='Email' />
+                <input
+                  onChange={handleRegisterFormChange}
+                  name='email'
+                  value={registerFormData.email}
+                  type="email" id="register-email" placeholder='Email' />
               </div>
               <div className='flex-1 flex flex-col gap-2 relative'>
                 <label htmlFor="register-password">Password</label>
@@ -81,6 +130,9 @@ const LoginRegister = () => {
                   onBlur={() => setShowTooltip(false)}
                 >
                   <input
+                    onChange={handleRegisterFormChange}
+                    name='password'
+                    value={registerFormData.password}
                     className='flex-1'
                     id="register-password"
                     type={!showPassword ? "password" : "text"}
@@ -113,6 +165,9 @@ const LoginRegister = () => {
                 <label htmlFor="register-confirm-password">Confirm Password</label>
                 <div className='flex'>
                   <input
+                    onChange={handleRegisterFormChange}
+                    name='confirmPassword'
+                    value={registerFormData.confirmPassword}
                     className='flex-1'
                     id="register-confirm-password"
                     type={!showConfirmPassword ? "password" : "text"}
