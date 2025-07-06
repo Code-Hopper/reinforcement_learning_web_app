@@ -1,15 +1,52 @@
 import { user } from '../models/users.js'; // Adjust path as needed
-import jwt from 'jsonwebtoken';
 import dotenv from "dotenv"
+import { createToken } from '../middlewares/createToken.js';
+import bcrypt from "bcrypt";
 
 dotenv.config({ path: "./config.env" })
 
-const JWT_SECRET = process.env.JWT_SECRET
-
 async function UserLogin(req, res) {
-    // Implement user login logic here
-    // Example: extract credentials from req.body, validate, respond
-    res.json({ message: 'UserLogin not implemented yet.' });
+    try {
+        const { email, password } = req.body;
+
+        // Basic validation
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required.' });
+        }
+
+        // Find user by email
+        const existingUser = await user.findOne({ email });
+        if (!existingUser) {
+            return res.status(401).json({ message: 'Invalid email or password.' });
+        }
+
+        // Compare passworda
+        const isMatch = await bcrypt.compare(password, existingUser.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid email or password.' });
+        }
+
+        // Create token
+        const token = createToken(existingUser._id);
+
+        // Optionally store token in user document for further validation
+        existingUser.token = token;
+        await existingUser.save();
+
+        // Respond with token and user info (omit password)
+        res.status(200).json({
+            message: 'Login successful.',
+            token,
+            user: {
+                id: existingUser._id,
+                fullName: existingUser.fullName,
+                email: existingUser.email
+            }
+        });
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ message: 'Server error during login.' });
+    }
 }
 
 
@@ -53,7 +90,30 @@ async function UserRegister(req, res) {
 }
 
 
+async function AccessDashboard(req, res) {
+    try {
+        // req.user is set by validateUserHandler middleware
+        if (!req.user) {
+            return res.status(401).json({ message: 'Unauthorized access.' });
+        }
+
+        // You can customize the dashboard data as needed
+        res.status(200).json({
+            message: 'Dashboard access granted.',
+            user: {
+                id: req.user._id,
+                fullName: req.user.fullName,
+                email: req.user.email
+            }
+        });
+    } catch (error) {
+        console.error('Dashboard access error:', error);
+        res.status(500).json({ message: 'Server error during dashboard access.' });
+    }
+}
+
 export {
     UserLogin,
-    UserRegister
+    UserRegister,
+    AccessDashboard
 };
