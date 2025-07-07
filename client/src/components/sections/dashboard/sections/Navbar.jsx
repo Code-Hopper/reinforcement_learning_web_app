@@ -3,9 +3,8 @@ import { useUser } from '../../../../context/userContext';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = ({ activeTab, setActiveTab }) => {
-    const { user } = useUser();
-
-    let navigate = useNavigate()
+    const { user, points } = useUser();
+    const navigate = useNavigate();
 
     const tabs = [
         { id: 'account', label: 'Account' },
@@ -15,7 +14,28 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 
     return (
         <div className='bg-primaryColor text-white h-full p-4'>
-            <h2 className='mb-8'>Welcome, <span className='text-highlightColor font-bold '>{user?.fullName || 'User'}</span></h2>
+            <h2 className='mb-4'>
+                Welcome, <span className='text-highlightColor font-bold'>{user?.fullName || 'User'}</span>
+            </h2>
+
+            {/* Show points and skills */}
+            <div className='mb-6'>
+                <p className='text-sm'>🎯 <strong>Points:</strong> {user ? points : 0}</p>
+                <p className='text-sm mt-2'>
+                    <strong>🧠 Skills:</strong>
+                </p>
+                <ul className='list-disc list-inside text-sm text-highlightColor'>
+                    {(user?.skills && user.skills.length > 0) ? (
+                        user.skills.map((skill, index) => (
+                            <li key={index}>{skill}</li>
+                        ))
+                    ) : (
+                        <li>No skills yet</li>
+                    )}
+                </ul>
+            </div>
+
+            {/* Tab buttons */}
             <div className='flex flex-col space-y-4'>
                 {tabs.map(tab => (
                     <button
@@ -30,11 +50,18 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                     </button>
                 ))}
             </div>
+
+            {/* Logout */}
             <div className='mt-5'>
-                <button onClick={() => {
-                    localStorage.removeItem("token")
-                    navigate("/")
-                }} className='text-center bg-secondaryColor w-full rounded-lg p-2'>logout</button>
+                <button
+                    onClick={() => {
+                        localStorage.removeItem("token");
+                        navigate("/");
+                    }}
+                    className='text-center bg-secondaryColor w-full rounded-lg p-2'
+                >
+                    Logout
+                </button>
             </div>
         </div>
     );

@@ -1,49 +1,27 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const userSchema = new mongoose.Schema({
-    fullName: {
-        type: String,
-        required: true,
-        trim: true
+    fullName: String,
+    email: { type: String, unique: true },
+    password: String,
+    token: String,
+    points: {
+        type: Number,
+        default: 0
     },
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true
-    },
-    password: {
-        type: String,
-        required: true
-    },
-    token: {
-        type: String,
-        select: false
-    }
-}, { timestamps: true });
-
-// Pre-save middleware to hash password
-userSchema.pre('save', async function (next) {
-    // Only hash if the password is modified (or new)
-    if (!this.isModified('password')) return next();
-
-    try {
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(this.password, saltRounds);
-        this.password = hashedPassword;
-        next();
-    } catch (err) {
-        next(err);
+    skills: {
+        type: [String],
+        default: []
     }
 });
 
-// Optional: Add a method to compare passwords
-userSchema.methods.comparePassword = async function (plainPassword) {
-    return await bcrypt.compare(plainPassword, this.password);
-};
+// Hash password before saving
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) return next();
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
+});
 
-const user = mongoose.models.user || mongoose.model('user', userSchema);
-
+const user = mongoose.model("User", userSchema);
 export { user };
