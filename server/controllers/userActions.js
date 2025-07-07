@@ -91,11 +91,16 @@ async function UserRegister(req, res) {
 
 
 async function AccessDashboard(req, res) {
+
+    console.log("dashboard access requested !")
+
     try {
         // req.user is set by validateUserHandler middleware
         if (!req.user) {
             return res.status(401).json({ message: 'Unauthorized access.' });
         }
+
+        console.log("dashboard access granted !")
 
         // You can customize the dashboard data as needed
         res.status(200).json({
