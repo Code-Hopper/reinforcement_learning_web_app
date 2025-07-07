@@ -2,6 +2,8 @@ import { user } from '../models/users.js'; // Adjust path as needed
 import dotenv from "dotenv"
 import { createToken } from '../middlewares/createToken.js';
 import bcrypt from "bcrypt";
+import axios from 'axios';
+import AnswerModel from "../models/answer.js"; // ← You’ll create this
 
 dotenv.config({ path: "./config.env" })
 
@@ -118,8 +120,76 @@ async function AccessDashboard(req, res) {
     }
 }
 
+async function GetQuestion(req, res) {
+    try {
+        const { query } = req.body;
+        const user = req.user;
+
+        if (!query) {
+            return res.status(400).json({ message: "Query is required" });
+        }
+
+        const flaskResponse = await axios.post("http://localhost:8000/generate", { query });
+
+        const questions = flaskResponse.data.questions;
+
+        res.status(200).json({ questions });
+    } catch (error) {
+        console.error("GetQuestion error:", error?.response?.data || error.message);
+        res.status(500).json({ message: 'Server error during question generation.' });
+    }
+}
+
+
+async function StoreAnswers(req, res) {
+    try {
+        const userId = req.user.id;
+        const { topic, answers } = req.body;
+
+        console.log(userId)
+        console.log("answers", answers)
+        console.log("topic", topic)
+
+        if (!topic || !Array.isArray(answers)) {
+            return res.status(400).json({ message: "Invalid request data" });
+        }
+
+        const entry = new AnswerModel({
+            userId,
+            topic,
+            answers, // [{ question, selected, correct }]
+            createdAt: new Date()
+        });
+
+        await entry.save();
+
+        res.status(201).json({ message: "Answers stored successfully" });
+    } catch (error) {
+        console.error("StoreAnswers Error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+}
+
+async function FetchAllTest(req, res) {
+    try {
+        const userId = req.user.id;
+
+        // Fetch all answer entries for the user
+        const tests = await AnswerModel.find({ userId }).sort({ createdAt: -1 });
+
+        res.status(200).json({ tests });
+    } catch (error) {
+        console.error("GetAllStoredTests Error:", error);
+        res.status(500).json({ message: "Server error while fetching stored tests." });
+    }
+}
+
+
 export {
     UserLogin,
     UserRegister,
-    AccessDashboard
+    AccessDashboard,
+    GetQuestion,
+    StoreAnswers,
+    FetchAllTest
 };
