@@ -108,7 +108,8 @@ async function AccessDashboard(req, res) {
             user: {
                 id: req.user._id,
                 fullName: req.user.fullName,
-                email: req.user.email
+                email: req.user.email,
+                createdAt: req.user.createdAt,
             }
         });
     } catch (error) {
