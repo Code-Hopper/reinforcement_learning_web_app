@@ -13,6 +13,14 @@ const userSchema = new mongoose.Schema({
     skills: {
         type: [String],
         default: []
+    },
+    topics: {
+        type: [String],
+        default: []
+    },
+    tagsLearned: {
+        type: [String],
+        default: []
     }
 });
 

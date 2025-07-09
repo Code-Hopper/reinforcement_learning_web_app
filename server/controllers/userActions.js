@@ -80,12 +80,7 @@ async function AccessDashboard(req, res) {
 
         res.status(200).json({
             message: 'Dashboard access granted.',
-            user: {
-                id: req.user._id,
-                fullName: req.user.fullName,
-                email: req.user.email,
-                createdAt: req.user.createdAt,
-            }
+            user: req.user
         });
     } catch (error) {
         console.error('Dashboard access error:', error);
@@ -220,6 +215,114 @@ async function UpdateUserProgress(req, res) {
     }
 }
 
+const leaderBoardData = async (req, res) => {
+    try {
+        const users = await user.find({}, { fullName: 1, points: 1, _id: 0 }).sort({ points: -1 });
+        console.log("leaderboard : ", users)
+        res.status(200).json({ success: true, leaderboard: users });
+    } catch (err) {
+        console.error("leaderBoardData error:", err);
+        res.status(500).json({ success: false, message: "Failed to fetch leaderboard data" });
+    }
+};
+
+
+const queryForTopic = async (req, res) => {
+    try {
+        const { topic, userId } = req.body;
+
+        if (!topic || topic.trim() === "") {
+            return res.status(400).json({ message: "Topic is required." });
+        }
+
+        // Call your Flask server
+        const flaskResponse = await axios.post("http://localhost:8000/query-topic-guide", {
+            topic,
+            userId: userId  // send to Flask too if needed
+        });
+
+        const {
+            response,
+            startingPoints,
+            suggestedTopics,
+            topicTag // 👈 assuming Flask returns this field (or use `topic`)
+        } = flaskResponse.data;
+
+        // Fallback: if topicTag not sent, use topic
+        const tagToStore = topicTag || topic;
+
+        // Update user by pushing to tagsLearned (avoid duplicates)
+        await user.findByIdAndUpdate(
+            userId,
+            { $addToSet: { tagsLearned: tagToStore } }
+        );
+
+        res.status(200).json({
+            response,
+            startingPoints,
+            suggestedTopics
+        });
+    } catch (err) {
+        console.error("Error while getting AI response:", err?.response?.data || err.message);
+        res.status(500).json({ message: "AI Tutor failed to respond." });
+    }
+};
+
+async function GetQuizFromLearnedTags(req, res) {
+    try {
+        const userId = req.user.id;
+
+        const userDoc = await user.findById(userId);
+        const tags = userDoc.tagsLearned || [];
+
+        if (tags.length === 0) {
+            return res.status(200).json({ message: "No topics learned yet.", questions: [] });
+        }
+
+        // Pick random topic
+        const randomTopic = tags[Math.floor(Math.random() * tags.length)];
+
+        // Call Flask API
+        const flaskResponse = await axios.post("http://localhost:8000/generate-questions", {
+            query: randomTopic,
+            level: "Beginner",
+            difficulty: "Easy"
+        });
+
+        const { questions } = flaskResponse.data;
+
+        return res.status(200).json({
+            topic: randomTopic,
+            questions
+        });
+
+    } catch (err) {
+        console.error("GetQuizFromLearnedTags Error:", err);
+        res.status(500).json({ message: "Failed to fetch quiz" });
+    }
+}
+
+const updateUserPoints = async (req, res) => {
+    const { userId } = req.params;
+    const { points } = req.body;
+
+    try {
+        const result = await user.findByIdAndUpdate(
+            userId,
+            { points },
+            { new: true }
+        );
+
+        if (!result) return res.status(404).json({ message: "User not found" });
+
+        res.status(200).json({ message: "Points updated", result });
+    } catch (error) {
+        console.error("Update Points Error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
 
 export {
     UserLogin,
@@ -229,5 +332,9 @@ export {
     StoreAnswers,
     FetchAllTest,
     GetTopicsToLearn,
-    UpdateUserProgress
+    UpdateUserProgress,
+    leaderBoardData,
+    queryForTopic,
+    GetQuizFromLearnedTags,
+    updateUserPoints
 };

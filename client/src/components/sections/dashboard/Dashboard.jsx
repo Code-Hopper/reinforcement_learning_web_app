@@ -9,27 +9,32 @@ import Content from './sections/Content.jsx';
 
 const Dashboard = () => {
     const navigate = useNavigate();
-    const { user, setUser } = useUser();
+    const { user, getUserData } = useUser();
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('account');
 
+    const checkUser = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return navigate('/');
+        try {
+            const result = await validateUser(token);
+
+            console.log(result)
+
+            if (!result.success) throw ("access rejected !")
+                
+            getUserData(result.user)
+        } catch (err) {
+            console.error("Validation error:", err);
+            navigate('/');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const checkUser = async () => {
-            const token = localStorage.getItem('token');
-            if (!token) return navigate('/');
-            try {
-                const result = await validateUser(token);
-                if (result.success) setUser(result.user);
-                else navigate('/');
-            } catch (err) {
-                console.error("Validation error:", err);
-                navigate('/');
-            } finally {
-                setLoading(false);
-            }
-        };
         checkUser();
-    }, [navigate, setUser]);
+    }, [navigate]);
 
     if (loading) {
         return (

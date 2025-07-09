@@ -1,33 +1,38 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { updateUserPoints } from '../api/backendApi'; // Create this API call
 
 const userContext = createContext();
 
 const UserProvider = ({ children }) => {
     const [points, setPoints] = useState(0);
+    const [user, setUser] = useState(null);
 
-    const [user, setUser] = useState()
+    const addPoints = async (amount) => {
+        const newPoints = points + amount;
+        setPoints(newPoints);
 
-    // Load points from localStorage on first load
-    useEffect(() => {
-        const storedPoints = localStorage.getItem("userPoints");
-        if (storedPoints) {
-            setPoints(parseInt(storedPoints, 10));
+        // Save points to DB if user exists
+        if (user?._id) {
+            try {
+                await updateUserPoints(user._id, newPoints);
+            } catch (error) {
+                console.error("Error saving points to DB", error);
+            }
         }
-    }, []);
-
-    // Store updated points in localStorage
-    const addPoints = (amount) => {
-        setPoints(prev => {
-            const updated = prev + amount;
-            localStorage.setItem("userPoints", updated);
-            return updated;
-        });
     };
 
     const resetPoints = () => {
         setPoints(0);
-        localStorage.setItem("userPoints", 0);
     };
+
+    const getUserData = (data) => {
+        setUser(data);
+        setPoints(data.points || 0); // initialize points from DB if available
+    };
+
+    useEffect(() => {
+        console.log("Current User:", user);
+    }, [user]);
 
     return (
         <userContext.Provider value={{
@@ -35,7 +40,7 @@ const UserProvider = ({ children }) => {
             addPoints,
             resetPoints,
             user,
-            setUser
+            getUserData
         }}>
             {children}
         </userContext.Provider>

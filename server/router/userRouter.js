@@ -4,14 +4,14 @@ import {
     UserLogin,
     UserRegister,
     AccessDashboard,
-    GetQuestion,
     StoreAnswers,
     FetchAllTest,
-    GetTopicsToLearn,
-    UpdateUserProgress
+    leaderBoardData,
+    queryForTopic,
+    GetQuizFromLearnedTags,
+    updateUserPoints
 } from "../controllers/userActions.js";
 import { validateUserHandler } from "../auth/validateUser.js";
-import { user } from "../models/users.js";
 
 const userRouter = express.Router();
 
@@ -21,42 +21,19 @@ userRouter.post("/register", UserRegister);
 
 // Auth-protected routes
 userRouter.get("/dashboard", validateUserHandler, AccessDashboard);
-userRouter.post("/generate-questions", validateUserHandler, GetQuestion);
-userRouter.post("/store-answers", validateUserHandler, StoreAnswers);
+
 userRouter.get("/all-tests", validateUserHandler, FetchAllTest);
 
-// New route to fetch learning topics
-userRouter.get("/topics-to-learn", validateUserHandler, GetTopicsToLearn);
+userRouter.post("/store-answers", validateUserHandler, StoreAnswers);
 
-userRouter.post("/update-progress", validateUserHandler, UpdateUserProgress);
+userRouter.get("/leader-board-data", validateUserHandler, leaderBoardData);
 
-userRouter.post("/update-profile", validateUserHandler, async (req, res) => {
-    try {
-        const userId = req.user.id;
-        console.log(userId)
-        const { points, skills } = req.body;
+userRouter.put("/update-points/:userId", validateUserHandler, updateUserPoints);
 
-        console.log(points, skills)
+// call ai routes
 
-        const updated = await user.findByIdAndUpdate(
-            userId,
-            { points, skills },
-            { new: true }
-        );
+userRouter.post("/query-for-topic", validateUserHandler, queryForTopic);
 
-        res.status(200).json({
-            message: "Profile updated",
-            user: {
-                fullName: updated.fullName,
-                email: updated.email,
-                points: updated.points,
-                skills: updated.skills
-            }
-        });
-    } catch (err) {
-        console.error("Update profile error:", err);
-        res.status(500).json({ message: "Failed to update profile" });
-    }
-});
+userRouter.get("/daily-quiz", validateUserHandler, GetQuizFromLearnedTags);
 
 export { userRouter };

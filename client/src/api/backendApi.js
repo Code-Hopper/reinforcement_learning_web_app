@@ -50,5 +50,68 @@ const userLogin = async (loginData) => {
     }
 };
 
+const fetchDataForLeaderBoard = async (token) => {
+    let response = await axios({
+        url: `${backendURL}/api/user/leader-board-data`,
+        method: "get",
+        headers: {
+            authorization: `Bearer ${token}`,
+        }
+    })
 
-export { userRegister, userLogin };
+    return response.data
+}
+
+const queryForTopicsToLearn = async (token, queryData, userId) => {
+    let response = await axios({
+        url: `${backendURL}/api/user/query-for-topic`,
+        method: "post",
+        headers: {
+            authorization: `Bearer ${token}`,
+        },
+        data: { ...queryData, userId }  // ✅ flatten the body
+    });
+    return response.data;
+};
+
+const fetchDailyQuiz = async (token) => {
+    const result = await axios.get(`${backendURL}/api/user/daily-quiz`, {
+        headers: {
+            authorization: `Bearer ${token}`
+        }
+    });
+
+    return result.data;
+};
+
+// ✅ Store submitted quiz answers and calculate result
+const storeAnswers = async (token, data) => {
+
+    console.log("getting data to save : ", data)
+
+    const response = await axios.post(`${backendURL}/api/user/store-answers`, data, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return response.data;
+};
+
+const updateUserPoints = async (userId, points) => {
+    const token = localStorage.getItem("token");
+
+    console.log("points to update : ", points)
+
+    const res = await axios.put(`${backendURL}/api/user/update-points/${userId}`, {
+        points
+    }, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    return res.data;
+};
+
+
+export { userRegister, userLogin, fetchDataForLeaderBoard, queryForTopicsToLearn, fetchDailyQuiz, storeAnswers, updateUserPoints };

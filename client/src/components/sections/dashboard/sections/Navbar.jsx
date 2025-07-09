@@ -8,6 +8,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 
     const tabs = [
         { id: 'account', label: 'Account' },
+        { id: 'stats', label: 'Stats' },
         { id: 'learning', label: 'Learning' },
         { id: 'tests', label: 'Previous Tests' }
     ];
@@ -20,19 +21,12 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 
             {/* Show points and skills */}
             <div className='mb-6'>
-                <p className='text-sm'>🎯 <strong>Points:</strong> {user ? points : 0}</p>
-                <p className='text-sm mt-2'>
-                    <strong>🧠 Skills:</strong>
+                <p className='text-2xl'>
+                    🎯 <strong>Points:</strong> {points == 0 ? "Start Learning" : points}
                 </p>
-                <ul className='list-disc list-inside text-sm text-highlightColor'>
-                    {(user?.skills && user.skills.length > 0) ? (
-                        user.skills.map((skill, index) => (
-                            <li key={index}>{skill}</li>
-                        ))
-                    ) : (
-                        <li>No skills yet</li>
-                    )}
-                </ul>
+                <p className='text-sm mt-2'>
+                    <strong>🧠 Achieved Tag : <span></span> </strong>
+                </p>
             </div>
 
             {/* Tab buttons */}

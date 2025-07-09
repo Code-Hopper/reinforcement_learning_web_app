@@ -4,7 +4,7 @@ import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import re
-import random
+import json
 
 load_dotenv()
 
@@ -25,7 +25,7 @@ def learn_topic():
         return jsonify({'error': 'No topic provided'}), 400
 
     try:
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
         prompt = f"""
 You are a helpful teacher. Explain the topic "{topic}" to a beginner in a short and clear way using bullet points or small paragraphs. Keep it simple, engaging, and under 300 words.
@@ -57,7 +57,7 @@ def generate_questions():
         return jsonify({'error': 'No topic provided'}), 400
 
     try:
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
         prompt = f"""
 Generate 5 {difficulty} multiple choice questions (MCQs) for a {level} level learner on the topic "{topic}". 
@@ -75,7 +75,6 @@ Answer: B
         response = model.generate_content(prompt)
         text = response.text.strip()
 
-        # Extract MCQs using regex
         pattern = r"Q: (.*?)\nA\. (.*?)\nB\. (.*?)\nC\. (.*?)\nD\. (.*?)\nAnswer: (.)"
         matches = re.findall(pattern, text, re.DOTALL)
 
@@ -127,6 +126,54 @@ def store_answers():
         'creditPoints': credit_points,
         'skillLevel': skill_level
     }), 201
+
+# -----------------------------
+# 🤖 AI Tutor: Topic Guide JSON
+# -----------------------------
+@app.route('/query-topic-guide', methods=['POST'])
+def query_topic_guide():
+    data = request.get_json()
+    topic = data.get('topic', '')
+
+    if not topic:
+        return jsonify({'error': 'No topic provided'}), 400
+
+    try:
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        prompt = f"""
+Act like a tutor. For the topic "{topic}", give:
+1. A 2-3 line overview.
+2. List of 4-6 points a beginner should learn first.
+3. 3-5 suggested next topics.
+
+Respond ONLY in valid JSON format like:
+{{
+  "topicTag" : "java"
+  "response": "short overview...",
+  "startingPoints": ["point1", "point2", ...],
+  "suggestedTopics": ["topic1", "topic2", ...]
+}}
+"""
+
+        res = model.generate_content(prompt)
+        raw_output = res.text.strip()
+        print("🧠 Gemini Raw Output:\n", raw_output)
+
+        # Try to extract the JSON part only
+        json_match = re.search(r'\{.*\}', raw_output, re.DOTALL)
+        if not json_match:
+            raise ValueError("No valid JSON found in Gemini response")
+
+        json_data = json.loads(json_match.group())
+
+        return jsonify(json_data)
+
+    except json.JSONDecodeError as jde:
+        print("❌ JSON Decode Error:", jde)
+        return jsonify({'error': 'Gemini returned invalid JSON format'}), 500
+    except Exception as e:
+        print("AI Tutor Query Error:", e)
+        return jsonify({'error': 'Failed to get topic guide'}), 500
 
 # -----------------------------
 # 🔧 Utility Functions
